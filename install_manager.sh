@@ -145,7 +145,9 @@ execute_script() {
         print_error "Script ${script_name} no encontrado"
         log_message "ERROR" "Script no encontrado: ${script_name}"
     fi
-}# Función para mostrar scripts disponibles de una categoría
+}
+
+# Función para mostrar scripts disponibles de una categoría
 display_script_category() {
     local category_name="$1"
     local script_array=("${!2}")
