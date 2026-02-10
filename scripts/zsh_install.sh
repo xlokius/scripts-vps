@@ -23,6 +23,11 @@ show_process() {
     echo -e "\n▶️ $1"
 }
 
+# Función para verificar si estamos en modo no interactivo
+is_noninteractive() {
+    [ ! -t 0 ] || [ -n "$NONINTERACTIVE" ]
+}
+
 # Función para verificar si un comando existe
 command_exists() {
     command -v "$1" >/dev/null 2>&1
@@ -45,16 +50,21 @@ show_section "VERIFICANDO INSTALACIÓN DE ZSH"
 if command_exists zsh; then
     show_process "ZSH ya está instalado en el sistema. Verificando versión..."
     zsh --version
-    read -p "¿Desea continuar con la reinstalación? (s/N) " -n 1 -r
-    echo
-    if [[ ! $REPLY =~ ^[Ss]$ ]]; then
-        echo "Omitiendo la instalación de ZSH."
+
+    if is_noninteractive; then
+        echo "Modo no interactivo detectado. Omitiendo reinstalación de ZSH."
     else
-        show_process "Reinstalando ZSH..."
-        echo "Actualizando índice de paquetes..."
-        sudo apt update
-        echo "Instalando ZSH..."
-        sudo apt install -y zsh
+        read -p "¿Desea continuar con la reinstalación? (s/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
+            show_process "Reinstalando ZSH..."
+            echo "Actualizando índice de paquetes..."
+            sudo apt update
+            echo "Instalando ZSH..."
+            sudo apt install -y zsh
+        else
+            echo "Omitiendo la instalación de ZSH."
+        fi
     fi
 else
     show_process "ZSH no está instalado. Procediendo con la instalación..."
@@ -79,13 +89,18 @@ fi
 show_section "INSTALANDO OH MY ZSH"
 if [ -d "$HOME/.oh-my-zsh" ]; then
     show_process "Oh My Zsh ya está instalado en el sistema."
-    read -p "¿Desea reinstalar Oh My Zsh? (s/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Ss]$ ]]; then
-        echo "Eliminando la instalación existente de Oh My Zsh..."
-        rm -rf "$HOME/.oh-my-zsh"
-        echo "Instalando Oh My Zsh..."
-        sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+
+    if is_noninteractive; then
+        echo "Modo no interactivo detectado. Omitiendo reinstalación de Oh My Zsh."
+    else
+        read -p "¿Desea reinstalar Oh My Zsh? (s/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
+            echo "Eliminando la instalación existente de Oh My Zsh..."
+            rm -rf "$HOME/.oh-my-zsh"
+            echo "Instalando Oh My Zsh..."
+            sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)" "" --unattended
+        fi
     fi
 else
     show_process "Instalando Oh My Zsh..."
@@ -101,11 +116,17 @@ show_process "Verificando plugin zsh-autosuggestions..."
 ZSH_AUTOSUGGESTIONS_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-autosuggestions"
 if [ -d "$ZSH_AUTOSUGGESTIONS_DIR" ]; then
     echo "El plugin zsh-autosuggestions ya está instalado."
-    read -p "¿Desea actualizarlo? (s/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Ss]$ ]]; then
-        echo "Actualizando zsh-autosuggestions..."
+
+    if is_noninteractive; then
+        echo "Modo no interactivo detectado. Actualizando automáticamente..."
         cd "$ZSH_AUTOSUGGESTIONS_DIR" && git pull
+    else
+        read -p "¿Desea actualizarlo? (s/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
+            echo "Actualizando zsh-autosuggestions..."
+            cd "$ZSH_AUTOSUGGESTIONS_DIR" && git pull
+        fi
     fi
 else
     echo "Instalando plugin zsh-autosuggestions..."
@@ -117,11 +138,17 @@ show_process "Verificando plugin zsh-syntax-highlighting..."
 ZSH_SYNTAX_HIGHLIGHTING_DIR="${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting"
 if [ -d "$ZSH_SYNTAX_HIGHLIGHTING_DIR" ]; then
     echo "El plugin zsh-syntax-highlighting ya está instalado."
-    read -p "¿Desea actualizarlo? (s/N) " -n 1 -r
-    echo
-    if [[ $REPLY =~ ^[Ss]$ ]]; then
-        echo "Actualizando zsh-syntax-highlighting..."
+
+    if is_noninteractive; then
+        echo "Modo no interactivo detectado. Actualizando automáticamente..."
         cd "$ZSH_SYNTAX_HIGHLIGHTING_DIR" && git pull
+    else
+        read -p "¿Desea actualizarlo? (s/N) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Ss]$ ]]; then
+            echo "Actualizando zsh-syntax-highlighting..."
+            cd "$ZSH_SYNTAX_HIGHLIGHTING_DIR" && git pull
+        fi
     fi
 else
     echo "Instalando plugin zsh-syntax-highlighting..."
@@ -165,7 +192,12 @@ sed -i 's/ZSH_THEME="robbyrussell"/ZSH_THEME="materialshell"/' "$ZSHRC"
 show_section "¡INSTALACIÓN COMPLETADA!"
 echo "✅ ZSH, Oh My Zsh, plugins y tema han sido instalados y configurados correctamente."
 echo "⚠️ NOTA: Para futuras sesiones, ZSH será su shell predeterminado."
-echo "💡 Iniciando ZSH automáticamente..."
 
-# Ejecutar ZSH para aplicar los cambios inmediatamente
-exec zsh
+# Solo ejecutar ZSH interactivamente si no estamos en modo no interactivo
+if is_noninteractive; then
+    echo "💡 Modo no interactivo detectado. Para aplicar los cambios, ejecute: exec zsh"
+else
+    echo "💡 Iniciando ZSH automáticamente..."
+    # Ejecutar ZSH para aplicar los cambios inmediatamente
+    exec zsh
+fi

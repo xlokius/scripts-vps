@@ -40,6 +40,13 @@ show_section "VERIFICANDO INSTALACIÓN PREVIA"
 if command_exists docker; then
     show_process "Docker ya está instalado en el sistema. Verificando versión..."
     docker --version
+
+    # Check if running non-interactively (piped or from another script)
+    if [ ! -t 0 ] || [ -n "$NONINTERACTIVE" ]; then
+        echo "Modo no interactivo detectado. Omitiendo reinstalación de Docker."
+        exit 0
+    fi
+
     read -p "¿Desea continuar con la reinstalación? (y/N) " -n 1 -r
     echo
     if [[ ! $REPLY =~ ^[Yy]$ ]]; then
