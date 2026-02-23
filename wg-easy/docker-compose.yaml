@@ -8,8 +8,8 @@ services:
       # 🔐 EDITAR: contraseña de la interfaz web
       - PASSWORD_HASH=$$2a$$10$$WF1Hc8ELc.GLKplccbkLmeYbskh4SIPxNLLnVZ1sUpfLmf.CUak3O
 
-      # 🌍 EDITAR: IP pública o dominio de tu VPS
-      - WG_HOST=$(MY_IP)
+      # 🌍 EDITAR: IP pública o dominio de tu VPS
+      - WG_HOST=${MY_IP}
 
       # 🔌 Puerto WireGuard (UDP)
       - WG_PORT=51820
