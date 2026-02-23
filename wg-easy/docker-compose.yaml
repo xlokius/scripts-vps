@@ -1,0 +1,42 @@
+services:
+  wg-easy:
+    image: ghcr.io/wg-easy/wg-easy
+    container_name: wg-easy
+    restart: unless-stopped
+
+    environment:
+      # 🔐 EDITAR: contraseña de la interfaz web
+      - PASSWORD_HASH=$$2a$$10$$WF1Hc8ELc.GLKplccbkLmeYbskh4SIPxNLLnVZ1sUpfLmf.CUak3O
+
+      # 🌍 EDITAR: IP pública o dominio de tu VPS
+      - WG_HOST=$(MY_IP)
+
+      # 🔌 Puerto WireGuard (UDP)
+      - WG_PORT=51820
+
+      # 🌐 Puerto de la interfaz web
+      - WG_UI_PORT=51821
+
+      # 📡 DNS para los clientes
+      - WG_DEFAULT_DNS=1.1.1.1,8.8.8.8
+
+      # 🧠 Rango de IPs para clientes
+      - WG_DEFAULT_ADDRESS=10.8.0.x
+
+      # 🚀 MTU recomendado en VPS
+      - WG_MTU=1420
+
+    volumes:
+      - ./wg-easy:/etc/wireguard
+
+    ports:
+      - "51820:51820/udp"
+      - "51821:51821/tcp"
+
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+
+    sysctls:
+      - net.ipv4.ip_forward=1
+      - net.ipv4.conf.all.src_valid_mark=1
