@@ -50,6 +50,8 @@ El menú permite seleccionar scripts individuales separados por comas, o usar es
 - `a`: todos los scripts disponibles.
 - `q`: salir.
 
+Antes de las opciones, el gestor muestra un panel de estado con el sistema operativo, versión, arquitectura, hostname, IP pública, hora actual y una verificación de conectividad. Si la IP pública no puede consultarse, se mostrará `No disponible` sin interrumpir el menú.
+
 ## Qué instala cada script
 
 | Archivo | Función |

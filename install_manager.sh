@@ -10,6 +10,9 @@ BLUE='\e[1;34m'
 GREEN='\e[1;32m'
 RED='\e[1;31m'
 YELLOW='\e[1;33m'
+CYAN='\e[1;36m'
+MAGENTA='\e[1;35m'
+DIM='\e[2m'
 NC='\e[0m' # No Color
 
 # Logging configuration
@@ -63,17 +66,26 @@ print_warning() {
     log_message "WARNING" "$1"
 }
 
+# Comprueba la conectividad sin imprimir mensajes para poder reutilizarla en el panel.
+has_internet_connection() {
+    if ping -c 1 -W 5 8.8.8.8 &>/dev/null || ping -c 1 -W 5 1.1.1.1 &>/dev/null; then
+        return 0
+    fi
+
+    return 1
+}
+
 # Check internet connectivity
 check_internet() {
     print_info "Verificando conectividad a internet..."
-    if ping -c 1 -W 5 8.8.8.8 &>/dev/null || ping -c 1 -W 5 1.1.1.1 &>/dev/null; then
+    if has_internet_connection; then
         print_success "Conectividad a internet verificada"
         return 0
-    else
-        print_error "No se detectó conexión a internet"
-        print_error "Por favor, verifique su conexión e intente de nuevo"
-        exit 1
     fi
+
+    print_error "No se detectó conexión a internet"
+    print_error "Por favor, verifique su conexión e intente de nuevo"
+    exit 1
 }
 
 # Check if script is run as root
@@ -99,6 +111,82 @@ INSTALL_SCRIPTS=(
 POST_INSTALL_SCRIPTS=(
     "zsh_aliases_setup.sh:Configurar aliases útiles para ZSH"
 )
+
+# Obtiene la IP pública sin impedir el funcionamiento del menú si el servicio no responde.
+get_public_ip() {
+    local public_ip=""
+
+    if command -v curl &>/dev/null; then
+        public_ip=$(curl -4fsS --connect-timeout 2 --max-time 4 https://api.ipify.org 2>/dev/null || true)
+    elif command -v wget &>/dev/null; then
+        public_ip=$(wget -4qO- --timeout=4 https://api.ipify.org 2>/dev/null || true)
+    fi
+
+    if [[ "${public_ip}" =~ ^[0-9]{1,3}(\.[0-9]{1,3}){3}$ ]]; then
+        echo "${public_ip}"
+    else
+        echo "No disponible"
+    fi
+}
+
+get_os_details() {
+    local os_name="Linux"
+    local os_version="No disponible"
+
+    if [ -r /etc/os-release ]; then
+        # shellcheck disable=SC1091
+        . /etc/os-release
+        os_name="${NAME:-Linux}"
+        os_version="${VERSION:-${VERSION_ID:-No disponible}}"
+    fi
+
+    printf '%s|%s\n' "${os_name}" "${os_version}"
+}
+
+print_panel_row() {
+    local label="$1"
+    local value="$2"
+    local value_color="${3:-$YELLOW}"
+
+    printf "${BLUE}│${NC} ${CYAN}%-16s${NC} ${BLUE}:${NC} ${value_color}%-44s${NC} ${BLUE}│${NC}\n" "${label}" "${value}"
+}
+
+display_system_panel() {
+    local os_details os_name os_version public_ip internet_status internet_color
+    local current_time architecture kernel_version host_name
+
+    os_details=$(get_os_details)
+    IFS='|' read -r os_name os_version <<< "${os_details}"
+    public_ip=$(get_public_ip)
+    current_time=$(date '+%Y-%m-%d %H:%M:%S %Z')
+    architecture=$(uname -m)
+    kernel_version=$(uname -r)
+    host_name=$(hostname)
+
+    if has_internet_connection; then
+        internet_status="● CONECTADO"
+        internet_color="${GREEN}"
+    else
+        internet_status="● SIN CONEXIÓN"
+        internet_color="${RED}"
+    fi
+
+    if [ -t 1 ]; then
+        clear
+    fi
+
+    printf '%b\n' "${BLUE}╭──────────────────────────────────────────────────────────────────╮${NC}"
+    printf "${BLUE}│${NC} ${YELLOW}%-64s${NC} ${BLUE}│${NC}\n" "SCRIPTS VPS · GESTOR DE INSTALACIÓN"
+    printf '%b\n' "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
+    print_panel_row "SISTEMA" "${os_name}" "${YELLOW}"
+    print_panel_row "VERSIÓN" "${os_version}" "${YELLOW}"
+    print_panel_row "ARQUITECTURA" "${architecture} · kernel ${kernel_version}" "${YELLOW}"
+    print_panel_row "HOSTNAME" "${host_name}" "${YELLOW}"
+    print_panel_row "IP PÚBLICA" "${public_ip}" "${YELLOW}"
+    print_panel_row "HORA ACTUAL" "${current_time}" "${YELLOW}"
+    print_panel_row "INTERNET" "${internet_status}" "${internet_color}"
+    printf '%b\n' "${BLUE}╰──────────────────────────────────────────────────────────────────╯${NC}"
+}
 
 # Function to check if a script exists
 script_exists() {
@@ -153,7 +241,7 @@ display_script_category() {
     local script_array=("${!2}")
     local start_index="$3"
 
-    echo -e "\n${YELLOW}${category_name}:${NC}"
+    printf '%b\n' "${MAGENTA}${category_name}${NC}"
 
     local counter=0
     for script_info in "${script_array[@]}"; do
@@ -161,9 +249,9 @@ display_script_category() {
         local item_index=$((start_index + counter))
 
         if script_exists "${script_name}"; then
-            echo -e "  ${item_index}. ${GREEN}${script_name}${NC} - ${script_desc}"
+            printf "  ${BLUE}[%02d]${NC} ${CYAN}%-32s${NC} ${DIM}%s${NC} ${GREEN}[LISTO]${NC}\n" "${item_index}" "${script_name}" "${script_desc}"
         else
-            echo -e "  ${item_index}. ${RED}${script_name}${NC} - ${script_desc} ${RED}(No disponible)${NC}"
+            printf "  ${BLUE}[%02d]${NC} ${RED}%-32s${NC} ${DIM}%s${NC} ${RED}[NO DISPONIBLE]${NC}\n" "${item_index}" "${script_name}" "${script_desc}"
         fi
 
         counter=$((counter + 1))
@@ -172,25 +260,24 @@ display_script_category() {
 
 # Function to display menu and get user selection
 display_menu() {
-    print_header "GESTOR DE INSTALACIÓN"
-
-    echo "Seleccione los scripts a ejecutar (separados por comas):"
+    display_system_panel
+    echo
+    printf '%b\n' "${BLUE}╭────────────────────── SCRIPTS DISPONIBLES ──────────────────────╮${NC}"
 
     # Display installation scripts
     display_script_category "SCRIPTS DE INSTALACIÓN" INSTALL_SCRIPTS[@] 1
 
     # Display post-installation scripts
     local post_start_index=$((${#INSTALL_SCRIPTS[@]} + 1))
+    echo
     display_script_category "SCRIPTS DE POST-INSTALACIÓN" POST_INSTALL_SCRIPTS[@] ${post_start_index}
 
-    echo
-    echo "  i. Ejecutar todos los scripts de instalación"
-    echo "  p. Ejecutar todos los scripts de post-instalación"
-    echo "  a. Ejecutar todos los scripts (instalación y post-instalación)"
-    echo "  q. Salir"
+    printf '%b\n' "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
+    printf '%b\n' "${BLUE}│${NC} ${YELLOW}[I]${NC} Instalación   ${YELLOW}[P]${NC} Post-instalación   ${YELLOW}[A]${NC} Todo   ${YELLOW}[Q]${NC} Salir  ${BLUE}│${NC}"
+    printf '%b\n' "${BLUE}╰──────────────────────────────────────────────────────────────────╯${NC}"
     echo
 
-    read -p "Selección: " selection
+    read -r -p $'\e[1;32mSelecciona una opción (ej. 1,3 o A): \e[0m' selection
 
     # Process selection
     case ${selection} in
