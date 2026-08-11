@@ -255,13 +255,13 @@ display_status_panel() {
     aliases_status=$(get_script_status "zsh_aliases_setup.sh")
 
     printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
-    printf "${CYAN} │  ${YELLOW}%-15s${NC} ${YELLOW}%-18s${NC} ${YELLOW}%-13s${NC} ${YELLOW}%-8s${NC} ${CYAN} │${NC}\n" \
+    printf "${CYAN} │  ${YELLOW}%-15s${NC} ${YELLOW}%-18s${NC} ${YELLOW}%-13s${NC} ${YELLOW}%-8s${NC}\n" \
         "INSTALACIÓN" "POST-INSTALACIÓN" "DISPONIBLES" "TOTAL"
-    printf "${CYAN} │  ${BLUE}%-15s${NC} ${BLUE}%-18s${NC} ${BLUE}%-13s${NC} ${BLUE}%-8s${NC} ${CYAN} │${NC}\n" \
+    printf "${CYAN} │  ${BLUE}%-15s${NC} ${BLUE}%-18s${NC} ${BLUE}%-13s${NC} ${BLUE}%-8s${NC}\n" \
         "${#INSTALL_SCRIPTS[@]}" "${#POST_INSTALL_SCRIPTS[@]}" "${available_scripts}" "$((${#INSTALL_SCRIPTS[@]} + ${#POST_INSTALL_SCRIPTS[@]}))"
     printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
     printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
-    printf "%b\n" "${CYAN} │  HERRAMIENTAS ${NC}: ${tools_status}    ${CYAN} DOCKER ${NC}: ${docker_status}    ${CYAN} ZSH ${NC}: ${zsh_status}    ${CYAN} ALIASES ${NC}: ${aliases_status}          ${CYAN}│${NC}"
+    printf "%b\n" "${CYAN} │  HERRAMIENTAS ${NC}: ${tools_status}    ${CYAN} DOCKER ${NC}: ${docker_status}    ${CYAN} ZSH ${NC}: ${zsh_status}    ${CYAN} ALIASES ${NC}: ${aliases_status}"
     printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
 }
 
@@ -291,16 +291,16 @@ display_menu() {
     printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
     print_menu_action_row 1 "HERRAMIENTAS" 3 "ZSH"
     print_menu_description_row "Git, wget, bat, eza y más." "Zsh, plugins y tema."
-    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │${NC}"
     print_menu_action_row 2 "DOCKER" 4 "ALIASES ZSH"
     print_menu_description_row "Docker Engine y Compose." "Aliases ls, la y bat."
-    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}I${CYAN}] ${BLUE}INSTALACIÓN      ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}P${CYAN}] ${BLUE}POST-INSTALACIÓN ${CYAN}[${YELLOW}Todo ${CYAN}] ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta las opciones 1, 2 y 3.${NC}    ${DIM}Ejecuta la opción 4.${NC}              ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}A${CYAN}] ${BLUE}EJECUTAR TODO    ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}Q${CYAN}] ${BLUE}SALIR             ${CYAN}[${YELLOW}Salir${CYAN}] ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta todas las opciones.${NC}       ${DIM}Cierra el gestor.${NC}                  ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │  ${GREEN}Uso:${NC} escribe ${WHITE}1${NC} o ${WHITE}01${NC} para una opción; ${WHITE}1,3${NC} para varias.             ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │${NC}"
+    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}I${CYAN}] ${BLUE}INSTALACIÓN      ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}P${CYAN}] ${BLUE}POST-INSTALACIÓN ${CYAN}[${YELLOW}Todo ${CYAN}]"
+    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta las opciones 1, 2 y 3.${NC}    ${DIM}Ejecuta la opción 4.${NC}"
+    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}A${CYAN}] ${BLUE}EJECUTAR TODO    ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}Q${CYAN}] ${BLUE}SALIR             ${CYAN}[${YELLOW}Salir${CYAN}]"
+    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta todas las opciones.${NC}       ${DIM}Cierra el gestor.${NC}"
+    printf '%b\n' "${CYAN} │${NC}"
+    printf '%b\n' "${CYAN} │  ${GREEN}Uso:${NC} escribe ${WHITE}1${NC} o ${WHITE}01${NC} para una opción; ${WHITE}1,3${NC} para varias."
     printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
     echo
 
