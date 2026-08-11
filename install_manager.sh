@@ -41,29 +41,29 @@ log_message() {
 
 # Print colored output
 print_header() {
-    echo -e "\n${BLUE}=====================================================${NC}"
-    echo -e "${BLUE}    $1${NC}"
-    echo -e "${BLUE}=====================================================${NC}\n"
+    printf '\n%b\n' "${BLUE}=====================================================${NC}"
+    printf '%b\n' "${BLUE}    $1${NC}"
+    printf '%b\n\n' "${BLUE}=====================================================${NC}"
     log_message "HEADER" "$1"
 }
 
 print_info() {
-    echo -e "${BLUE}[INFO]${NC} $1"
+    printf '%b\n' "${BLUE}[INFO]${NC} $1"
     log_message "INFO" "$1"
 }
 
 print_success() {
-    echo -e "${GREEN}[SUCCESS]${NC} $1"
+    printf '%b\n' "${GREEN}[SUCCESS]${NC} $1"
     log_message "SUCCESS" "$1"
 }
 
 print_error() {
-    echo -e "${RED}[ERROR]${NC} $1"
+    printf '%b\n' "${RED}[ERROR]${NC} $1"
     log_message "ERROR" "$1"
 }
 
 print_warning() {
-    echo -e "${YELLOW}[WARNING]${NC} $1"
+    printf '%b\n' "${YELLOW}[WARNING]${NC} $1"
     log_message "WARNING" "$1"
 }
 
@@ -255,18 +255,31 @@ display_status_panel() {
     aliases_status=$(get_script_status "zsh_aliases_setup.sh")
 
     printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
-    printf "%b\n" "${CYAN} │${NC}  ${YELLOW}INSTALACIÓN${NC}       ${YELLOW}POST-INSTALACIÓN${NC}       ${YELLOW}DISPONIBLES${NC}       ${YELLOW}TOTAL${NC}"
-    printf "%b\n" "${CYAN} │${NC}      ${BLUE}${#INSTALL_SCRIPTS[@]}${NC}                  ${BLUE}${#POST_INSTALL_SCRIPTS[@]}${NC}                 ${BLUE}${available_scripts}${NC}           ${BLUE}$((${#INSTALL_SCRIPTS[@]} + ${#POST_INSTALL_SCRIPTS[@]}))${NC}"
+    printf "${CYAN} │  ${YELLOW}%-15s${NC} ${YELLOW}%-18s${NC} ${YELLOW}%-13s${NC} ${YELLOW}%-8s${NC} ${CYAN} │${NC}\n" \
+        "INSTALACIÓN" "POST-INSTALACIÓN" "DISPONIBLES" "TOTAL"
+    printf "${CYAN} │  ${BLUE}%-15s${NC} ${BLUE}%-18s${NC} ${BLUE}%-13s${NC} ${BLUE}%-8s${NC} ${CYAN} │${NC}\n" \
+        "${#INSTALL_SCRIPTS[@]}" "${#POST_INSTALL_SCRIPTS[@]}" "${available_scripts}" "$((${#INSTALL_SCRIPTS[@]} + ${#POST_INSTALL_SCRIPTS[@]}))"
     printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
-    printf "%b\n" "     ${CYAN} HERRAMIENTAS ${NC}: ${tools_status}    ${CYAN} DOCKER ${NC}: ${docker_status}    ${CYAN} ZSH ${NC}: ${zsh_status}    ${CYAN} ALIASES ${NC}: ${aliases_status}"
+    printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
+    printf "%b\n" "${CYAN} │  HERRAMIENTAS ${NC}: ${tools_status}    ${CYAN} DOCKER ${NC}: ${docker_status}    ${CYAN} ZSH ${NC}: ${zsh_status}    ${CYAN} ALIASES ${NC}: ${aliases_status}          ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
 }
 
-print_menu_item() {
-    local number="$1"
-    local name="$2"
-    local state="$3"
+print_menu_action_row() {
+    local left_number="$1"
+    local left_name="$2"
+    local right_number="$3"
+    local right_name="$4"
 
-    printf "${CYAN}[${WHITE}%02d${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}%-5s${CYAN}]${NC}" "${number}" "${name}" "${state}"
+    printf "${CYAN} │  [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}]    [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}] ${CYAN}│${NC}\n" \
+        "${left_number}" "${left_name}" "${right_number}" "${right_name}"
+}
+
+print_menu_description_row() {
+    local left_description="$1"
+    local right_description="$2"
+
+    printf "${CYAN} │  ${DIM}%-29s${NC}    ${DIM}%-29s${NC} ${CYAN}│${NC}\n" "${left_description}" "${right_description}"
 }
 
 # Function to display menu and get user selection
@@ -276,27 +289,18 @@ display_menu() {
     display_status_panel
     echo
     printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
-    printf '%b' "${CYAN} │  ${NC}"
-    print_menu_item 1 "HERRAMIENTAS" "Menu"
-    printf '%b' "       "
-    print_menu_item 3 "ZSH" "Menu"
-    printf '%b\n' " ${CYAN}│${NC}"
-    printf '%b' "${CYAN} │  ${NC}"
-    print_menu_item 2 "DOCKER" "Menu"
-    printf '%b' "       "
-    print_menu_item 4 "ALIASES ZSH" "Menu"
-    printf '%b\n' " ${CYAN}│${NC}"
-    printf '%b\n' "${CYAN} │${NC}"
-    printf '%b' "${CYAN} │  ${NC}"
-    printf "${CYAN}[${WHITE}I${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "INSTALACIÓN"
-    printf '%b' "       "
-    printf "${CYAN}[${WHITE}P${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "POST-INSTALACIÓN"
-    printf '%b\n' " ${CYAN}│${NC}"
-    printf '%b' "${CYAN} │  ${NC}"
-    printf "${CYAN}[${WHITE}A${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "EJECUTAR TODO"
-    printf '%b' "       "
-    printf "${CYAN}[${WHITE}Q${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Salir${CYAN}]${NC}" "SALIR"
-    printf '%b\n' " ${CYAN}│${NC}"
+    print_menu_action_row 1 "HERRAMIENTAS" 3 "ZSH"
+    print_menu_description_row "Git, wget, bat, eza y más." "Zsh, plugins y tema."
+    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
+    print_menu_action_row 2 "DOCKER" 4 "ALIASES ZSH"
+    print_menu_description_row "Docker Engine y Compose." "Aliases ls, la y bat."
+    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}I${CYAN}] ${BLUE}INSTALACIÓN      ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}P${CYAN}] ${BLUE}POST-INSTALACIÓN ${CYAN}[${YELLOW}Todo ${CYAN}] ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta las opciones 1, 2 y 3.${NC}    ${DIM}Ejecuta la opción 4.${NC}              ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │  ${CYAN}[${WHITE}A${CYAN}] ${BLUE}EJECUTAR TODO    ${CYAN}[${YELLOW}Todo ${CYAN}]    ${CYAN}[${WHITE}Q${CYAN}] ${BLUE}SALIR             ${CYAN}[${YELLOW}Salir${CYAN}] ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │  ${DIM}Ejecuta todas las opciones.${NC}       ${DIM}Cierra el gestor.${NC}                  ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │${NC}                                                                 ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │  ${GREEN}Uso:${NC} escribe ${WHITE}1${NC} o ${WHITE}01${NC} para una opción; ${WHITE}1,3${NC} para varias.             ${CYAN}│${NC}"
     printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
     echo
 
