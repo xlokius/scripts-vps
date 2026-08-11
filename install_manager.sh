@@ -271,7 +271,7 @@ print_menu_action_row() {
     local right_number="$3"
     local right_name="$4"
 
-    printf "${CYAN} │  [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}]    [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}] ${CYAN}│${NC}\n" \
+    printf "${CYAN} │  [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}]    [${WHITE}%02d${CYAN}] ${BLUE}%-16s${CYAN} [${YELLOW}Menu ${CYAN}]\n" \
         "${left_number}" "${left_name}" "${right_number}" "${right_name}"
 }
 
@@ -279,7 +279,7 @@ print_menu_description_row() {
     local left_description="$1"
     local right_description="$2"
 
-    printf "${CYAN} │  ${DIM}%-29s${NC}    ${DIM}%-29s${NC} ${CYAN}│${NC}\n" "${left_description}" "${right_description}"
+    printf "${CYAN} │  ${DIM}%-29s${NC}    ${DIM}%-29s${NC}\n" "${left_description}" "${right_description}"
 }
 
 # Function to display menu and get user selection
