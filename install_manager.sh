@@ -6,12 +6,13 @@
 # Ofrece un menú interactivo para seleccionar qué scripts ejecutar
 
 # Color definitions
-BLUE='\e[1;34m'
-GREEN='\e[1;32m'
-RED='\e[1;31m'
-YELLOW='\e[1;33m'
-CYAN='\e[1;36m'
-MAGENTA='\e[1;35m'
+BLUE='\033[1;94m'
+GREEN='\033[1;92m'
+RED='\033[1;91m'
+YELLOW='\033[1;93m'
+CYAN='\033[1;96m'
+MAGENTA='\033[1;95m'
+WHITE='\033[1;97m'
 DIM='\e[2m'
 NC='\e[0m' # No Color
 
@@ -148,7 +149,7 @@ print_panel_row() {
     local value="$2"
     local value_color="${3:-$YELLOW}"
 
-    printf "${BLUE}│${NC} ${CYAN}%-16s${NC} ${BLUE}:${NC} ${value_color}%-44s${NC} ${BLUE}│${NC}\n" "${label}" "${value}"
+    printf "${CYAN} │  ${CYAN}%-12s${NC} ${CYAN}:${NC} ${value_color}%s${NC}\n" "${label}" "${value}"
 }
 
 display_system_panel() {
@@ -175,17 +176,17 @@ display_system_panel() {
         clear
     fi
 
-    printf '%b\n' "${BLUE}╭──────────────────────────────────────────────────────────────────╮${NC}"
-    printf "${BLUE}│${NC} ${YELLOW}%-64s${NC} ${BLUE}│${NC}\n" "SCRIPTS VPS · GESTOR DE INSTALACIÓN"
-    printf '%b\n' "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
+    printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
+    printf "%b\n" "${CYAN} │${NC}                         ${WHITE}\033[4mSCRIPTS VPS${NC}"
+    printf '%b\n' "${CYAN} │${NC}"
     print_panel_row "SISTEMA" "${os_name}" "${YELLOW}"
     print_panel_row "VERSIÓN" "${os_version}" "${YELLOW}"
-    print_panel_row "ARQUITECTURA" "${architecture} · kernel ${kernel_version}" "${YELLOW}"
+    print_panel_row "ARQUITECTURA" "${architecture} (kernel ${kernel_version})" "${YELLOW}"
     print_panel_row "HOSTNAME" "${host_name}" "${YELLOW}"
     print_panel_row "IP PÚBLICA" "${public_ip}" "${YELLOW}"
     print_panel_row "HORA ACTUAL" "${current_time}" "${YELLOW}"
     print_panel_row "INTERNET" "${internet_status}" "${internet_color}"
-    printf '%b\n' "${BLUE}╰──────────────────────────────────────────────────────────────────╯${NC}"
+    printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
 }
 
 # Function to check if a script exists
@@ -235,49 +236,71 @@ execute_script() {
     fi
 }
 
-# Función para mostrar scripts disponibles de una categoría
-display_script_category() {
-    local category_name="$1"
-    local script_array=("${!2}")
-    local start_index="$3"
+get_script_status() {
+    local script_name="$1"
 
-    printf '%b\n' "${MAGENTA}${category_name}${NC}"
+    if script_exists "${script_name}"; then
+        printf '%b' "${GREEN}ON${NC}"
+    else
+        printf '%b' "${RED}OFF${NC}"
+    fi
+}
 
-    local counter=0
-    for script_info in "${script_array[@]}"; do
-        IFS=':' read -r script_name script_desc <<< "${script_info}"
-        local item_index=$((start_index + counter))
+display_status_panel() {
+    local available_scripts tools_status docker_status zsh_status aliases_status
+    available_scripts=$(check_available_scripts)
+    tools_status=$(get_script_status "ubuntu_server_setup.sh")
+    docker_status=$(get_script_status "docker_and_compose_install.sh")
+    zsh_status=$(get_script_status "zsh_install.sh")
+    aliases_status=$(get_script_status "zsh_aliases_setup.sh")
 
-        if script_exists "${script_name}"; then
-            printf "  ${BLUE}[%02d]${NC} ${CYAN}%-32s${NC} ${DIM}%s${NC} ${GREEN}[LISTO]${NC}\n" "${item_index}" "${script_name}" "${script_desc}"
-        else
-            printf "  ${BLUE}[%02d]${NC} ${RED}%-32s${NC} ${DIM}%s${NC} ${RED}[NO DISPONIBLE]${NC}\n" "${item_index}" "${script_name}" "${script_desc}"
-        fi
+    printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
+    printf "%b\n" "${CYAN} │${NC}  ${YELLOW}INSTALACIÓN${NC}       ${YELLOW}POST-INSTALACIÓN${NC}       ${YELLOW}DISPONIBLES${NC}       ${YELLOW}TOTAL${NC}"
+    printf "%b\n" "${CYAN} │${NC}      ${BLUE}${#INSTALL_SCRIPTS[@]}${NC}                  ${BLUE}${#POST_INSTALL_SCRIPTS[@]}${NC}                 ${BLUE}${available_scripts}${NC}           ${BLUE}$((${#INSTALL_SCRIPTS[@]} + ${#POST_INSTALL_SCRIPTS[@]}))${NC}"
+    printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
+    printf "%b\n" "     ${CYAN} HERRAMIENTAS ${NC}: ${tools_status}    ${CYAN} DOCKER ${NC}: ${docker_status}    ${CYAN} ZSH ${NC}: ${zsh_status}    ${CYAN} ALIASES ${NC}: ${aliases_status}"
+}
 
-        counter=$((counter + 1))
-    done
+print_menu_item() {
+    local number="$1"
+    local name="$2"
+    local state="$3"
+
+    printf "${CYAN}[${WHITE}%02d${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}%-5s${CYAN}]${NC}" "${number}" "${name}" "${state}"
 }
 
 # Function to display menu and get user selection
 display_menu() {
     display_system_panel
     echo
-    printf '%b\n' "${BLUE}╭────────────────────── SCRIPTS DISPONIBLES ──────────────────────╮${NC}"
-
-    # Display installation scripts
-    display_script_category "SCRIPTS DE INSTALACIÓN" INSTALL_SCRIPTS[@] 1
-
-    # Display post-installation scripts
-    local post_start_index=$((${#INSTALL_SCRIPTS[@]} + 1))
+    display_status_panel
     echo
-    display_script_category "SCRIPTS DE POST-INSTALACIÓN" POST_INSTALL_SCRIPTS[@] ${post_start_index}
-
-    printf '%b\n' "${BLUE}├──────────────────────────────────────────────────────────────────┤${NC}"
-    printf '%b\n' "${BLUE}│${NC} ${YELLOW}[I]${NC} Instalación   ${YELLOW}[P]${NC} Post-instalación   ${YELLOW}[A]${NC} Todo   ${YELLOW}[Q]${NC} Salir  ${BLUE}│${NC}"
-    printf '%b\n' "${BLUE}╰──────────────────────────────────────────────────────────────────╯${NC}"
+    printf '%b\n' "${CYAN} ┌─────────────────────────────────────────────────────────────────┐${NC}"
+    printf '%b' "${CYAN} │  ${NC}"
+    print_menu_item 1 "HERRAMIENTAS" "Menu"
+    printf '%b' "       "
+    print_menu_item 3 "ZSH" "Menu"
+    printf '%b\n' " ${CYAN}│${NC}"
+    printf '%b' "${CYAN} │  ${NC}"
+    print_menu_item 2 "DOCKER" "Menu"
+    printf '%b' "       "
+    print_menu_item 4 "ALIASES ZSH" "Menu"
+    printf '%b\n' " ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} │${NC}"
+    printf '%b' "${CYAN} │  ${NC}"
+    printf "${CYAN}[${WHITE}I${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "INSTALACIÓN"
+    printf '%b' "       "
+    printf "${CYAN}[${WHITE}P${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "POST-INSTALACIÓN"
+    printf '%b\n' " ${CYAN}│${NC}"
+    printf '%b' "${CYAN} │  ${NC}"
+    printf "${CYAN}[${WHITE}A${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Todo ${CYAN}]${NC}" "EJECUTAR TODO"
+    printf '%b' "       "
+    printf "${CYAN}[${WHITE}Q${CYAN}] ${BLUE}%-17s${CYAN}[${YELLOW}Salir${CYAN}]${NC}" "SALIR"
+    printf '%b\n' " ${CYAN}│${NC}"
+    printf '%b\n' "${CYAN} └─────────────────────────────────────────────────────────────────┘${NC}"
     echo
 
-    read -r -p $'\e[1;32mSelecciona una opción (ej. 1,3 o A): \e[0m' selection
+    read -r -p $'\e[1;92m Select menu : \e[0m' selection
 
     # Process selection
     case ${selection} in
